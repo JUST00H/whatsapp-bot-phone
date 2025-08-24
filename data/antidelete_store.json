@@ -1,0 +1,76 @@
+{
+  "5BE52EF65148C8B09CABB10A29C77F34": {
+    "key": {
+      "remoteJid": "254796753598@s.whatsapp.net",
+      "fromMe": true,
+      "id": "5BE52EF65148C8B09CABB10A29C77F34"
+    },
+    "message": {
+      "conversation": ".antidelete on"
+    },
+    "pushName": "prof",
+    "timestamp": 1755977623
+  },
+  "54F9813D55E69C33114628BA035C8BBF": {
+    "key": {
+      "remoteJid": "254796753598@s.whatsapp.net",
+      "fromMe": true,
+      "id": "54F9813D55E69C33114628BA035C8BBF"
+    },
+    "message": {
+      "conversation": ".antidelete status"
+    },
+    "pushName": "prof",
+    "timestamp": 1755977684
+  },
+  "439F20C79B9F99C5CEB3FA3A712B9943": {
+    "key": {
+      "remoteJid": "254796753598@s.whatsapp.net",
+      "fromMe": false,
+      "id": "439F20C79B9F99C5CEB3FA3A712B9943"
+    },
+    "message": {
+      "conversation": "Hehhegvwcwhgw",
+      "messageContextInfo": {
+        "deviceListMetadata": {
+          "senderKeyHash": "pph1lK3pVmkXtg==",
+          "senderTimestamp": "1755793365",
+          "recipientKeyHash": "tItBjonfSeJftQ==",
+          "recipientTimestamp": "1755965929"
+        },
+        "deviceListMetadataVersion": 2,
+        "messageSecret": "I9wesK67qr6dBmQ+/H7uyWaH2pJ+rtNsmwE0U50pcdk="
+      }
+    },
+    "pushName": "Mr J",
+    "timestamp": 1755977714
+  },
+  "DB6D67F9889422D01A2A8C728EB706C1": {
+    "key": {
+      "remoteJid": "254796753598@s.whatsapp.net",
+      "fromMe": false,
+      "id": "DB6D67F9889422D01A2A8C728EB706C1"
+    },
+    "message": {
+      "protocolMessage": {
+        "key": {
+          "remoteJid": "254101273639@s.whatsapp.net",
+          "fromMe": true,
+          "id": "439F20C79B9F99C5CEB3FA3A712B9943"
+        },
+        "type": "REVOKE"
+      },
+      "messageContextInfo": {
+        "deviceListMetadata": {
+          "senderKeyHash": "pph1lK3pVmkXtg==",
+          "senderTimestamp": "1755793365",
+          "recipientKeyHash": "tItBjonfSeJftQ==",
+          "recipientTimestamp": "1755965929"
+        },
+        "deviceListMetadataVersion": 2
+      }
+    },
+    "pushName": "Mr J",
+    "timestamp": 1755977718
+  }
+}

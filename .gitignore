@@ -1,0 +1,18 @@
+# Node dependencies
+node_modules/
+
+# Baileys session/auth files
+auth_info/
+
+# Pairing code
+pairing-code.txt
+
+# Logs
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Env files (if you add secrets later)
+.env
