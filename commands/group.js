@@ -7,52 +7,52 @@ const parsedJid = (text) => {
 };
 
 module.exports = async (sock, msg, messageText, sender) => {
-  const args = messageText.split(" ");
-  const command = args[0].slice(1).toLowerCase();
-  const groupId = msg.key.remoteJid;
-
-  // ✅ Handle .kick command
-  if (command === "kick") {
-    const participants = [];
-
-    // ✅ Collect participants (supports reply + multiple mentions for kickall)
-    if (msg.message?.extendedTextMessage?.contextInfo?.participant) {
-      participants.push(msg.message.extendedTextMessage.contextInfo.participant);
-    }
-    if (msg.message?.extendedTextMessage?.contextInfo?.mentionedJid) {
-      participants.push(...msg.message.extendedTextMessage.contextInfo.mentionedJid);
-    }
-
-    if (participants.length === 0) {
-      await sock.sendMessage(groupId, { text: "❌ Please reply to or mention the user(s) you want to kick." }, { quoted: msg });
-      return;
-    }
-
-    try {
-      await sock.groupParticipantsUpdate(groupId, participants, "remove");
-
-      // ✅ Dynamic plural message
-      await sock.sendMessage(groupId, {
-        text: `✅ Kicked 1 member from the group.`
-      });
-
-      // ✅ Safe delete (no crash if stanzaId missing)
-      const stanzaId = msg.message?.extendedTextMessage?.contextInfo?.stanzaId;
-      if (stanzaId) {
-        await sock.sendMessage(groupId, {
-          delete: {
-            remoteJid: groupId,
-            fromMe: false,
-            id: stanzaId,
-            participant: participants[0] // delete only the first one’s msg
-          }
-        });
-      }
-    } catch (err) {
-      console.error("❌ Kick command error:", err);
-      await sock.sendMessage(groupId, { text: "⚠️ Failed to kick user(s)." }, { quoted: msg });
-    }
+  const command = messageText.toLowerCase().split(' ')[0].slice(1);
+  const groupMetadata = await sock.groupMetadata(msg.key.remoteJid).catch(err => {
+    console.error('Error fetching group metadata:', err);
+    return null;
+  });
+  if (!groupMetadata) {
+    await sock.sendMessage(msg.key.remoteJid, { text: "❌ Failed to fetch group metadata." });
     return;
+  }
+  const isAdmin = groupMetadata.participants.find(p => p.id === sender)?.admin;
+
+  // .kick command (replaced)
+  if (command === 'kick') {
+    try {
+      const chatId = msg.key.remoteJid;
+      const isGroup = chatId.endsWith('@g.us');
+
+      if (!isGroup) {
+        return sock.sendMessage(chatId, { text: '⚠️ .kick is only available in group chats.' });
+      }
+
+      if (!isAdmin) {
+        return sock.sendMessage(chatId, { text: '⚠️ Only group admins can use .kick.' });
+      }
+
+      const quotedMessage = msg.message.extendedTextMessage?.contextInfo?.quotedMessage;
+      if (!quotedMessage || !msg.message.extendedTextMessage?.contextInfo?.participant) {
+        return sock.sendMessage(chatId, { text: '⚠️ Please reply to a message with .kick to remove the sender.' });
+      }
+
+      const targetUser = msg.message.extendedTextMessage.contextInfo.participant;
+      const isTargetAdmin = groupMetadata.participants.find(p => p.id === targetUser)?.admin;
+      if (isTargetAdmin) {
+        return sock.sendMessage(chatId, { text: '⚠️ Cannot remove an admin with .kick.' });
+      }
+
+      await sock.groupParticipantsUpdate(chatId, [targetUser], 'remove');
+      await sock.sendMessage(chatId, {
+        text: `✅ @${targetUser.split('@')[0]} has been removed from the group.`,
+        mentions: [targetUser]
+      }, { quoted: msg });
+
+    } catch (err) {
+      console.error('Error in .kick command:', err);
+      await sock.sendMessage(msg.key.remoteJid, { text: `⚠️ Error: ${err.message || 'Unknown error'}.` });
+    }
   }
 
   // .promote command
