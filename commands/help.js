@@ -10,11 +10,12 @@ module.exports = async (sock, msg) => {
 - *.revoke*: Revokes group invite link (Admins only).
 - *.ginfo [invite_link]*: Shows group info from invite link.
 - *.tagall*: Mentions all group members (Admins only).
+- *.hidetag [message]*: Sends a hidden tag message to all members (Admins only).
 - *.poll Question|Option1|Option2|...*: Creates a poll (Admins only).
 - *.schedule YYYY-MM-DD HH:MM EAT Message*: Schedules a message (Admins only).
 - *.view*: Shows the last deleted message in private chats.
-- *autoreply*: Automatically replies to all private chat messages with "Thanks for your message! I’ll get to you ASAP."
 - *hello*: Sends a greeting message.
 - *(Links)*: Non-admins cannot send links; they will be deleted.`;
+
   await sock.sendMessage(msg.key.remoteJid, { text: helpMessage });
 };
