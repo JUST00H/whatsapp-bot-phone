@@ -7,75 +7,52 @@ const parsedJid = (text) => {
 };
 
 module.exports = async (sock, msg, messageText, sender) => {
-  const command = messageText.toLowerCase().split(' ')[0].slice(1);
-  const groupMetadata = await sock.groupMetadata(msg.key.remoteJid).catch(err => {
-    console.error('Error fetching group metadata:', err);
-    return null;
-  });
-  if (!groupMetadata) {
-    await sock.sendMessage(msg.key.remoteJid, { text: "❌ Failed to fetch group metadata." });
-    return;
-  }
-  const isAdmin = groupMetadata.participants.find(p => p.id === sender)?.admin;
+  const args = messageText.split(" ");
+  const command = args[0].slice(1).toLowerCase();
+  const groupId = msg.key.remoteJid;
 
+  // ✅ Handle .kick command
+  if (command === "kick") {
+    const participants = [];
 
-  // .kick command
-  if (command === 'kick') {
-    if (!isAdmin) {
-      return sock.sendMessage(msg.key.remoteJid, { text: "🚫 Only admins can kick members." });
+    // ✅ Collect participants (supports reply + multiple mentions for kickall)
+    if (msg.message?.extendedTextMessage?.contextInfo?.participant) {
+      participants.push(msg.message.extendedTextMessage.contextInfo.participant);
+    }
+    if (msg.message?.extendedTextMessage?.contextInfo?.mentionedJid) {
+      participants.push(...msg.message.extendedTextMessage.contextInfo.mentionedJid);
     }
 
-    let users = [];
-    const args = messageText.slice(6).trim().toLowerCase();
-    const mentions = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
-    const replyJid = msg.message?.extendedTextMessage?.contextInfo?.participant;
-
-    if (args === 'all') {
-      users = groupMetadata.participants.filter(p => !p.admin).map(p => p.id);
-    } else if (mentions.length) {
-      users = mentions;
-    } else if (replyJid) {
-      users = [replyJid];
+    if (participants.length === 0) {
+      await sock.sendMessage(groupId, { text: "❌ Please reply to or mention the user(s) you want to kick." }, { quoted: msg });
+      return;
     }
 
-    const adminUsers = users.filter(u => groupMetadata.participants.find(p => p.id === u)?.admin);
-    users = users.filter(u => !adminUsers.includes(u));
+    try {
+      await sock.groupParticipantsUpdate(groupId, participants, "remove");
 
-    if (users.length === 0) {
-      return sock.sendMessage(msg.key.remoteJid, { text: "❗ Please mention a user, reply to a message, or use 'all' to kick non-admins." });
-    }
+      // ✅ Dynamic plural message
+      await sock.sendMessage(groupId, {
+        text: `✅ Kicked 1 member from the group.`
+      });
 
-    if (args === 'all') {
-      await sock.sendMessage(msg.key.remoteJid, { text: `⏳ Kicking ${users.length} non-admin member(s)... Please wait.` });
-      await sleep(10000);
-    }
-
-    const results = [];
-    for (const user of users) {
-      try {
-        await Promise.race([
-          sock.groupParticipantsUpdate(msg.key.remoteJid, [user], "remove"),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Request timed out after 30s')), 30000))
-        ]);
-        results.push({ user, status: 'kicked' });
-      } catch (err) {
-        console.error(`Failed to kick ${user}:`, err);
-        results.push({ user, status: 'failed', error: err.message });
+      // ✅ Safe delete (no crash if stanzaId missing)
+      const stanzaId = msg.message?.extendedTextMessage?.contextInfo?.stanzaId;
+      if (stanzaId) {
+        await sock.sendMessage(groupId, {
+          delete: {
+            remoteJid: groupId,
+            fromMe: false,
+            id: stanzaId,
+            participant: participants[0] // delete only the first one’s msg
+          }
+        });
       }
+    } catch (err) {
+      console.error("❌ Kick command error:", err);
+      await sock.sendMessage(groupId, { text: "⚠️ Failed to kick user(s)." }, { quoted: msg });
     }
-
-    const successCount = results.filter(r => r.status === 'kicked').length;
-    const failed = results.filter(r => r.status === 'failed').map(r => `${r.user.split('@')[0]}: ${r.error}`);
-    let response = `✅ Kicked ${successCount} member(s) from the group.`;
-    if (failed.length > 0) {
-      response += `\n❌ Failed to kick: ${failed.join(', ')}`;
-    }
-    await sock.sendMessage(msg.key.remoteJid, { text: response });
-
-    if (replyJid) {
-      await sleep(3000);
-      await sock.sendMessage(msg.key.remoteJid, { delete: msg.message.extendedTextMessage.contextInfo.stanzaId });
-    }
+    return;
   }
 
   // .promote command
