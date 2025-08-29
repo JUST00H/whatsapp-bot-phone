@@ -13,6 +13,7 @@ module.exports = async (sock, msg) => {
 - *.hidetag [message]*: Sends a hidden tag message to all members (Admins only).
 - *.poll Question|Option1|Option2|...*: Creates a poll (Admins only).
 - *.schedule YYYY-MM-DD HH:MM EAT Message*: Schedules a message (Admins only).
+- *.warn [@user]*: Warns a user (reply to their message). After 3 warnings, the user is removed. (Admins only).
 - *.view*: Shows the last deleted message in private chats.
 - *hello*: Sends a greeting message.
 - *(Links)*: Non-admins cannot send links; they will be deleted.`;
