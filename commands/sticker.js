@@ -1,51 +1,49 @@
 // commands/sticker.js
-// Tested & working 100% on Baileys latest version (2025)
-
+// ONLY IMAGES → No video/GIF support
 const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
-const { Sticker, StickerTypes } = require('wa-sticker-formatter'); // <-- NEW DEPENDENCY
-const fs = require('fs');
-const os = require('os');
+const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const path = require('path');
 
 module.exports = async (sock, m, messageText, sender) => {
   try {
-    // Check if it's a reply to media
+    // Must be a reply to a message
     const quoted = m.message?.extendedTextMessage?.contextInfo?.quotedMessage;
     if (!quoted) {
       return sock.sendMessage(m.key.remoteJid, {
-        text: 'Reply to an *image* or *short video/GIF* (max 10s) with *.sticker*'
+        text: 'Reply to an *image* with *.sticker* to convert it!'
       }, { quoted: m });
     }
 
     let buffer;
-    let mimetype;
-    let isAnimated = false;
 
-    // Detect media type
+    // Only allow imageMessage
     if (quoted.imageMessage) {
-      mimetype = quoted.imageMessage.mimetype;
       buffer = await downloadMedia(quoted.imageMessage);
-    } 
+    }
+    // Block videos/GIFs
     else if (quoted.videoMessage) {
-      if (quoted.videoMessage.seconds > 10) {
-        return sock.sendMessage(m.key.remoteJid, { text: 'Video too long! Max 10 seconds for animated sticker.' }, { quoted: m });
-      }
-      mimetype = quoted.videoMessage.mimetype;
-      buffer = await downloadMedia(quoted.videoMessage);
-      isAnimated = quoted.videoMessage.gifPlayback || mimetype.includes('gif');
-    } 
+      return sock.sendMessage(m.key.remoteJid, {
+        text: 'Video/GIF not supported!\nOnly *images* can be converted to stickers.'
+      }, { quoted: m });
+    }
+    // Block if already a sticker
     else if (quoted.stickerMessage) {
-      return sock.sendMessage(m.key.remoteJid, { text: 'This is already a sticker!' }, { quoted: m });
-    } 
+      return sock.sendMessage(m.key.remoteJid, {
+        text: 'This is already a sticker!'
+      }, { quoted: m });
+    }
+    // Any other type
     else {
-      return sock.sendMessage(m.key.remoteJid, { text: 'Only images and short videos/GIFs are supported!' }, { quoted: m });
+      return sock.sendMessage(m.key.remoteJid, {
+        text: 'Please reply to a valid *image* (photo) with *.sticker*'
+      }, { quoted: m });
     }
 
-    // Create sticker using wa-sticker-formatter (most reliable method in 2025)
+    // Create sticker from image
     const sticker = new Sticker(buffer, {
-      pack: 'MyBot',           // Change this
-      author: 'WhatsApp Bot',   // Change this
-      type: isAnimated ? StickerTypes.FULL : StickerTypes.DEFAULT,
+      pack: 'MyBot',           // Change if you want
+      author: 'WhatsApp Bot',   // Change if you want
+      type: StickerTypes.DEFAULT,
       quality: 50
     });
 
@@ -55,9 +53,9 @@ module.exports = async (sock, m, messageText, sender) => {
       sticker: stickerBuffer
     }, { quoted: m });
 
-    // Success message
-    sock.sendMessage(m.key.remoteJid, {
-      text: 'Sticker created successfully!'
+    // Optional success message
+    await sock.sendMessage(m.key.remoteJid, {
+      text: 'Sticker created!'
     }, { quoted: m });
 
   } catch (err) {
@@ -68,9 +66,9 @@ module.exports = async (sock, m, messageText, sender) => {
   }
 };
 
-// Helper: download media as buffer
+// Helper: download image as buffer
 async function downloadMedia(message) {
-  const stream = await downloadContentFromMessage(message, message.mimetype.split('/')[0]);
+  const stream = await downloadContentFromMessage(message, 'image');
   const chunks = [];
   for await (const chunk of stream) {
     chunks.push(chunk);
