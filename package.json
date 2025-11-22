@@ -14,6 +14,7 @@
     "@whiskeysockets/baileys": "^6.7.18",
     "libsignal": "^2.0.1",
     "node-schedule": "^2.1.1",
-    "pino": "^9.7.0"
+    "pino": "^9.7.0",
+    "wa-sticker-formatter": "^4.4.4"
   }
 }
