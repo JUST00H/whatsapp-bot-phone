@@ -24,7 +24,7 @@ module.exports = (sock) => {
         const meta = await sock.groupMetadata(id);
 
         await sock.sendMessage(id, {
-          text: `👋 Welcome @${member.split("@")[0]} to *${meta.subject}*!\n\n📜 *Group Rules:*\n• Be>`,
+          text: `👋 Welcome @${member.split("@")[0]} to *${meta.subject}*!\n\n📜 *Group Rules:*\n• Be respectful\n• No spamming\n• No insults or hate speech\n\n🚫 No links allowed\n📌 Type *.help* for commands`,
           mentions: [member]
         });
 
