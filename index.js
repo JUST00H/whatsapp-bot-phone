@@ -91,13 +91,6 @@ async function startBot() {
     const msgId = msg.key.id;
     global.messageCache[msgId] = { chatId, msg };
 
-    // 📥 Cache incoming view-once messages
-    if (msg.message?.viewOnceMessageV2) {
-      const innerMsg = msg.message.viewOnceMessageV2.message;
-      global.vvCache = global.vvCache || {};
-      global.vvCache[msg.key.id] = { chatId, msg: innerMsg };
-    }
-
     // ✅ Cache view-once messages
     if (msg.message?.viewOnceMessageV2) {
       const innerMsg = msg.message.viewOnceMessageV2.message;
